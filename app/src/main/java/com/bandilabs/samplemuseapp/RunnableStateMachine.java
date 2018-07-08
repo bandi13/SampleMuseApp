@@ -14,6 +14,9 @@ import com.choosemuse.libmuse.MuseDataListener;
 import com.choosemuse.libmuse.MuseDataPacket;
 import com.choosemuse.libmuse.MuseDataPacketType;
 import com.choosemuse.libmuse.MuseManagerAndroid;
+import com.jjoe64.graphview.GraphView;
+import com.jjoe64.graphview.series.DataPoint;
+import com.jjoe64.graphview.series.LineGraphSeries;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -28,6 +31,8 @@ public class RunnableStateMachine implements Runnable {
     private final RunnableStateMachine thisRunnable;
     private final TextView txtConnectionInfo;
     private final TextView txtDataInfo;
+    private final GraphView graph;
+    private final ArrayList<LineGraphSeries<DataPoint>> series;
     private int graphNumPoints = 0;
 
     public RunnableStateMachine(MuseManagerAndroid manager, AppCompatActivity view) {
@@ -36,6 +41,10 @@ public class RunnableStateMachine implements Runnable {
         this.thisRunnable = this;
         this.txtConnectionInfo = (TextView) view.findViewById(R.id.connectionInfo);
         this.txtDataInfo = (TextView) view.findViewById(R.id.dataInfo);
+        this.graph = (GraphView) view.findViewById(R.id.graph);
+        this.graph.getViewport().setXAxisBoundsManual(false);
+        this.graph.getViewport().setYAxisBoundsManual(false);
+        this.series = new ArrayList<LineGraphSeries<DataPoint>>();
         timerHandler.postDelayed(this, HANDLER_DELAY);
     }
 
@@ -62,9 +71,15 @@ public class RunnableStateMachine implements Runnable {
             @Override
             public void receiveMuseDataPacket(MuseDataPacket museDataPacket, Muse muse) {
                 StringBuilder out = new StringBuilder();
+                while(series.size() < museDataPacket.valuesSize()) {
+                    LineGraphSeries<DataPoint> curSeries = new LineGraphSeries<>();
+                    series.add(curSeries);
+                    graph.addSeries(curSeries);
+                }
                 ArrayList<Double> values = museDataPacket.values();
-                for(Double curVal : values) {
-                    out.append(doubleToStr(curVal));
+                for(int i = 0; i < values.size(); i++) {
+                    series.get(i).appendData(new DataPoint(graphNumPoints,values.get(i)),false,100);
+                    out.append(doubleToStr(values.get(i)));
                     out.append(' ');
                 }
                 Log.i("DataPacket","Packet received: "+out.toString());
@@ -84,6 +99,9 @@ public class RunnableStateMachine implements Runnable {
                     Log.i("Connection","Disconnected");
                     curMuse.unregisterAllListeners();
                     curMuse = null;
+                    for(LineGraphSeries<DataPoint> curSeries : series) {
+                        curSeries.resetData(new DataPoint[0]);
+                    }
                     manager.startListening();
                     timerHandler.postDelayed(thisRunnable, HANDLER_DELAY);
                 }
