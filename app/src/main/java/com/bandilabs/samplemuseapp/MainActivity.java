@@ -1,5 +1,6 @@
 package com.bandilabs.samplemuseapp;
 
+import android.bluetooth.BluetoothAdapter;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
@@ -32,6 +33,16 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
+    /**
+     * Check for Bluetooth.
+     * Taken from: https://stackoverflow.com/questions/7672334/how-to-check-if-bluetooth-is-enabled-programmatically
+     * @return True if Bluetooth is available.
+     */
+    public static boolean isBluetoothAvailable() {
+        final BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        return (bluetoothAdapter != null && bluetoothAdapter.isEnabled());
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -40,8 +51,10 @@ public class MainActivity extends AppCompatActivity {
         mTextMessage = (TextView) findViewById(R.id.message);
         BottomNavigationView navigation = (BottomNavigationView) findViewById(R.id.navigation);
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
+
         manager = MuseManagerAndroid.getInstance();
         manager.setContext(this);
+        if(!isBluetoothAvailable()) { mTextMessage.setText(R.string.no_bluetooth); }
     }
 
 }
