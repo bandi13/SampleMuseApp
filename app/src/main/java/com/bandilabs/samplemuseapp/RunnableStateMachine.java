@@ -59,11 +59,6 @@ public class RunnableStateMachine implements Runnable {
             return;
         }
 
-        String str = "";
-        for(Muse m:muses) {
-            if(str.length() != 0) str+='\n';
-            str+=m.getName()+'('+m.getRssi()+')';
-        }
         manager.stopListening();
         curMuse = muses.get(0);
         txtConnectionInfo.setText("Muse: "+curMuse.getName());
