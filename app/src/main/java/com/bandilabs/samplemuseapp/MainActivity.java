@@ -1,6 +1,8 @@
 package com.bandilabs.samplemuseapp;
 
+import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
@@ -43,6 +45,16 @@ public class MainActivity extends AppCompatActivity {
         return (bluetoothAdapter != null && bluetoothAdapter.isEnabled());
     }
 
+    // Based off of: https://stackoverflow.com/questions/26097513/android-simple-alert-dialog
+    private void alertView( String message, DialogInterface.OnClickListener onOk, DialogInterface.OnClickListener onCancel ) {
+         AlertDialog.Builder dialog = new AlertDialog.Builder(this);
+             dialog.setTitle( "Alert" )
+                   .setMessage(message);
+             if(onCancel != null) dialog.setNegativeButton("Cancel", onCancel);
+             if(onOk != null) dialog.setPositiveButton("Ok", onOk);
+             dialog.show();
+     }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -54,7 +66,12 @@ public class MainActivity extends AppCompatActivity {
 
         manager = MuseManagerAndroid.getInstance();
         manager.setContext(this);
-        if(!isBluetoothAvailable()) { mTextMessage.setText(R.string.no_bluetooth); }
+        if(!isBluetoothAvailable()) {
+            alertView(getResources().getString(R.string.no_bluetooth), new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) { MainActivity.this.finish(); }
+                }, null);
+        }
     }
 
 }
