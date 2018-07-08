@@ -26,8 +26,9 @@ public class RunnableStateMachine implements Runnable {
     private final int HANDLER_DELAY = 100; // timer interval in ms
     private final MuseManagerAndroid manager;
     private final RunnableStateMachine thisRunnable;
-    private TextView txtConnectionInfo;
-    private TextView txtDataInfo;
+    private final TextView txtConnectionInfo;
+    private final TextView txtDataInfo;
+    private int graphNumPoints = 0;
 
     public RunnableStateMachine(MuseManagerAndroid manager, AppCompatActivity view) {
         this.manager = manager;
@@ -68,6 +69,7 @@ public class RunnableStateMachine implements Runnable {
                 }
                 Log.i("DataPacket","Packet received: "+out.toString());
                 txtDataInfo.setText(out.toString());
+                graphNumPoints++;
             }
 
             @Override
