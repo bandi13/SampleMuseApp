@@ -39,16 +39,6 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
-    /**
-     * Check for Bluetooth.
-     * Taken from: https://stackoverflow.com/questions/7672334/how-to-check-if-bluetooth-is-enabled-programmatically
-     * @return True if Bluetooth is available.
-     */
-    public static boolean isBluetoothAvailable() {
-        final BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-        return (bluetoothAdapter != null && bluetoothAdapter.isEnabled());
-    }
-
     // Based off of: https://stackoverflow.com/questions/26097513/android-simple-alert-dialog
     private void alertView( String message, DialogInterface.OnClickListener onOk, DialogInterface.OnClickListener onCancel ) {
          AlertDialog.Builder dialog = new AlertDialog.Builder(this);
@@ -57,6 +47,13 @@ public class MainActivity extends AppCompatActivity {
              if(onCancel != null) dialog.setNegativeButton("Cancel", onCancel);
              if(onOk != null) dialog.setPositiveButton("Ok", onOk);
              dialog.show();
+    }
+    private void alertViewCloseApp(String message) {
+        alertView(message, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) { MainActivity.this.finish(); }
+        }, null);
+
     }
 
     final int PERMISSIONS_REQUEST_STARTUP = 0;
@@ -67,10 +64,7 @@ public class MainActivity extends AppCompatActivity {
                 if(grantResults.length == 0) return; // If request is cancelled, the result arrays are empty.
                 for(int i = 0; i < permissions.length; i++) {
                     if (grantResults[i] != PackageManager.PERMISSION_GRANTED) {
-                        alertView("No permission for: " + permissions[i], new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) { MainActivity.this.finish(); }
-                        }, null);
+                        alertViewCloseApp("No permission for: " + permissions[i]);
                         break;
                     }
                 }
@@ -87,18 +81,23 @@ public class MainActivity extends AppCompatActivity {
         BottomNavigationView navigation = (BottomNavigationView) findViewById(R.id.navigation);
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
 
-        String permission = Manifest.permission.ACCESS_COARSE_LOCATION;
-        if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(this, new String[]{permission}, PERMISSIONS_REQUEST_STARTUP);
+        String permissions[] = new String[]{Manifest.permission.ACCESS_COARSE_LOCATION,Manifest.permission.BLUETOOTH,Manifest.permission.BLUETOOTH_ADMIN};
+        ArrayList<String> permissionsNeeded = new ArrayList<>();
+        for(String permission:permissions) {
+            if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
+                permissionsNeeded.add(permission);
+            }
         }
+        if(permissionsNeeded.size() != 0)
+            ActivityCompat.requestPermissions(this,permissionsNeeded.toArray(new String[0]), PERMISSIONS_REQUEST_STARTUP);
 
         manager = MuseManagerAndroid.getInstance();
         manager.setContext(this);
-        if(!isBluetoothAvailable()) {
-            alertView(getResources().getString(R.string.no_bluetooth), new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) { MainActivity.this.finish(); }
-                }, null);
+        final BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        if(bluetoothAdapter == null) {
+            alertViewCloseApp(getResources().getString(R.string.no_bluetooth));
+        } else {
+            if(!bluetoothAdapter.isEnabled()) bluetoothAdapter.enable();
         }
         manager.removeFromListAfter(0);
     }
