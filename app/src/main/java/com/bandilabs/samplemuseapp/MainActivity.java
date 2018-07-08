@@ -78,7 +78,6 @@ public class MainActivity extends AppCompatActivity {
         } else {
             if(!bluetoothAdapter.isEnabled()) bluetoothAdapter.enable();
         }
-        manager.removeFromListAfter(0);
         timerRunnable = new RunnableStateMachine(manager,timerHandler, this);
         timerRunnable.start();
     }
