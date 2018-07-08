@@ -6,38 +6,21 @@ import android.bluetooth.BluetoothAdapter;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.design.widget.BottomNavigationView;
+import android.os.Handler;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.view.MenuItem;
-import android.widget.TextView;
+
 import com.choosemuse.libmuse.MuseManagerAndroid;
+
+import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
     private MuseManagerAndroid manager;
-    private TextView mTextMessage;
 
-    private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
-            = new BottomNavigationView.OnNavigationItemSelectedListener() {
-
-        @Override
-        public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-            switch (item.getItemId()) {
-                case R.id.navigation_home:
-                    mTextMessage.setText(R.string.title_home);
-                    return true;
-                case R.id.navigation_dashboard:
-                    mTextMessage.setText(R.string.title_dashboard);
-                    return true;
-                case R.id.navigation_notifications:
-                    mTextMessage.setText(R.string.title_notifications);
-                    return true;
-            }
-            return false;
-        }
-    };
+    // runs without a timer by reposting this handler at the end of the runnable
+    Handler timerHandler = new Handler();
+    RunnableStateMachine timerRunnable;
 
     // Based off of: https://stackoverflow.com/questions/26097513/android-simple-alert-dialog
     private void alertView( String message, DialogInterface.OnClickListener onOk, DialogInterface.OnClickListener onCancel ) {
@@ -77,10 +60,6 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mTextMessage = (TextView) findViewById(R.id.message);
-        BottomNavigationView navigation = (BottomNavigationView) findViewById(R.id.navigation);
-        navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
-
         String permissions[] = new String[]{Manifest.permission.ACCESS_COARSE_LOCATION,Manifest.permission.BLUETOOTH,Manifest.permission.BLUETOOTH_ADMIN};
         ArrayList<String> permissionsNeeded = new ArrayList<>();
         for(String permission:permissions) {
@@ -100,5 +79,7 @@ public class MainActivity extends AppCompatActivity {
             if(!bluetoothAdapter.isEnabled()) bluetoothAdapter.enable();
         }
         manager.removeFromListAfter(0);
+        timerRunnable = new RunnableStateMachine(manager,timerHandler, this);
+        timerRunnable.start();
     }
 }
