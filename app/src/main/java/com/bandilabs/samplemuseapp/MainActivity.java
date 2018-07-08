@@ -59,19 +59,20 @@ public class MainActivity extends AppCompatActivity {
              dialog.show();
     }
 
-    final int MY_PERMISSIONS_REQUEST = 0;
+    final int PERMISSIONS_REQUEST_STARTUP = 0;
     @Override
     public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
         switch (requestCode) {
-            case MY_PERMISSIONS_REQUEST: {
-                // If request is cancelled, the result arrays are empty.
-                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    // permission was granted, yay!
-                } else {
-                    alertView(getResources().getString(R.string.no_bluetooth), new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) { MainActivity.this.finish(); }
-                    }, null);
+            case PERMISSIONS_REQUEST_STARTUP: {
+                if(grantResults.length == 0) return; // If request is cancelled, the result arrays are empty.
+                for(int i = 0; i < permissions.length; i++) {
+                    if (grantResults[i] != PackageManager.PERMISSION_GRANTED) {
+                        alertView("No permission for: " + permissions[i], new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) { MainActivity.this.finish(); }
+                        }, null);
+                        break;
+                    }
                 }
             }
         }
@@ -88,7 +89,7 @@ public class MainActivity extends AppCompatActivity {
 
         String permission = Manifest.permission.ACCESS_COARSE_LOCATION;
         if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(this, new String[]{permission}, MY_PERMISSIONS_REQUEST);
+                ActivityCompat.requestPermissions(this, new String[]{permission}, PERMISSIONS_REQUEST_STARTUP);
         }
 
         manager = MuseManagerAndroid.getInstance();
