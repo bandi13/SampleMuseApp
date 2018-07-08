@@ -6,7 +6,6 @@ import android.bluetooth.BluetoothAdapter;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.os.Handler;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -19,7 +18,6 @@ public class MainActivity extends AppCompatActivity {
     private MuseManagerAndroid manager;
 
     // runs without a timer by reposting this handler at the end of the runnable
-    Handler timerHandler = new Handler();
     RunnableStateMachine timerRunnable;
 
     // Based off of: https://stackoverflow.com/questions/26097513/android-simple-alert-dialog
@@ -78,7 +76,6 @@ public class MainActivity extends AppCompatActivity {
         } else {
             if(!bluetoothAdapter.isEnabled()) bluetoothAdapter.enable();
         }
-        timerRunnable = new RunnableStateMachine(manager,timerHandler, this);
-        timerRunnable.start();
+        timerRunnable = new RunnableStateMachine(manager, this);
     }
 }

@@ -19,48 +19,39 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 
 public class RunnableStateMachine implements Runnable {
-    private Muse curMuse;
-    enum State { STOPPED, STARTED, RUNNING }
-    private volatile State curState = State.STOPPED;
+    // This is used to keep track of current connections. If we have one open, then curMuse != null and
+    // we do not call the timer/runnable
+    private Muse curMuse = null;
+    private final Handler timerHandler = new Handler();
+    private final int HANDLER_DELAY = 100; // timer interval in ms
     private final MuseManagerAndroid manager;
-    private final Handler timerHandler;
+    private final RunnableStateMachine thisRunnable;
     private TextView txtConnectionInfo;
     private TextView txtDataInfo;
 
-    public RunnableStateMachine(MuseManagerAndroid manager, Handler timerHandler, AppCompatActivity view) {
+    public RunnableStateMachine(MuseManagerAndroid manager, AppCompatActivity view) {
         this.manager = manager;
-        this.timerHandler = timerHandler;
+        manager.removeFromListAfter(5); // clean the list after 5 seconds
+        this.thisRunnable = this;
         this.txtConnectionInfo = (TextView) view.findViewById(R.id.connectionInfo);
         this.txtDataInfo = (TextView) view.findViewById(R.id.dataInfo);
-    }
-
-    public void stop() {
-        if(curState == State.STOPPED) { return; }
-        timerHandler.removeCallbacks(this);
-        curState = State.STOPPED;
-        if(curMuse != null) { curMuse.disconnect(); curMuse.unregisterAllListeners(); curMuse = null; }
-        manager.stopListening();
-    }
-    public void start() {
-        if(curState != State.STOPPED) { return; }
-        curState = State.STARTED;
-        manager.startListening();
-        timerHandler.postDelayed(this, 1000);
+        timerHandler.postDelayed(this, HANDLER_DELAY);
     }
 
     @Override
     public void run() {
-        if(curState != State.STARTED) { return; }
-
+        Log.i("Runnable","Searching for Muse");
         ArrayList<Muse> muses = manager.getMuses();
         if(muses.size() == 0) {
             txtConnectionInfo.setText("Muses: None detected");
-            timerHandler.postDelayed(this, 1000);
+            manager.startListening();
+            timerHandler.postDelayed(this, HANDLER_DELAY);
             return;
         }
 
         manager.stopListening();
         curMuse = muses.get(0);
+        Log.i("Runnable","Found muse: "+curMuse.getName());
         txtConnectionInfo.setText("Muse: "+curMuse.getName());
         curMuse.registerDataListener(new MuseDataListener() {
             private String doubleToStr(double value) {
@@ -89,11 +80,13 @@ public class RunnableStateMachine implements Runnable {
             public void receiveMuseConnectionPacket(MuseConnectionPacket museConnectionPacket, Muse muse) {
                 if(museConnectionPacket.getCurrentConnectionState() == ConnectionState.DISCONNECTED) {
                     Log.i("Connection","Disconnected");
-                    muse.runAsynchronously();
+                    curMuse.unregisterAllListeners();
+                    curMuse = null;
+                    manager.startListening();
+                    timerHandler.postDelayed(thisRunnable, HANDLER_DELAY);
                 }
             }
         });
         curMuse.runAsynchronously();
-        curState = State.RUNNING;
     }
 }
