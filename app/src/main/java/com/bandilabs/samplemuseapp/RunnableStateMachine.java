@@ -14,9 +14,17 @@ import com.choosemuse.libmuse.MuseDataListener;
 import com.choosemuse.libmuse.MuseDataPacket;
 import com.choosemuse.libmuse.MuseDataPacketType;
 import com.choosemuse.libmuse.MuseManagerAndroid;
+import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.components.YAxis;
+import com.github.mikephil.charting.data.Entry;
+import com.github.mikephil.charting.data.LineData;
+import com.github.mikephil.charting.data.LineDataSet;
+import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 
 public class RunnableStateMachine implements Runnable {
     // This is used to keep track of current connections. If we have one open, then curMuse != null and
@@ -28,6 +36,8 @@ public class RunnableStateMachine implements Runnable {
     private final RunnableStateMachine thisRunnable;
     private final TextView txtConnectionInfo;
     private final TextView txtDataInfo;
+    private final LineChart chart;
+    private final List<LineDataSet> chartDataSets;
     private int graphNumPoints = 0;
 
     public RunnableStateMachine(MuseManagerAndroid manager, AppCompatActivity view) {
@@ -36,6 +46,10 @@ public class RunnableStateMachine implements Runnable {
         this.thisRunnable = this;
         this.txtConnectionInfo = (TextView) view.findViewById(R.id.connectionInfo);
         this.txtDataInfo = (TextView) view.findViewById(R.id.dataInfo);
+        this.chart = (LineChart) view.findViewById(R.id.chart);
+        this.chartDataSets = new ArrayList<>();
+        chart.setData(new LineData());
+        chart.setAutoScaleMinMaxEnabled(true);
         timerHandler.postDelayed(this, HANDLER_DELAY);
     }
 
@@ -61,14 +75,32 @@ public class RunnableStateMachine implements Runnable {
             }
             @Override
             public void receiveMuseDataPacket(MuseDataPacket museDataPacket, Muse muse) {
-                StringBuilder out = new StringBuilder();
                 ArrayList<Double> values = museDataPacket.values();
-                for(Double curVal : values) {
-                    out.append(doubleToStr(curVal));
+                int numSets = values.size();
+                while(chart.getLineData().getDataSetCount() < numSets) {
+                    Log.i("ChartDataSet", "Adding data set to chart");
+                    LinkedList<Entry> entryList = new LinkedList<>();
+                    entryList.add(new Entry(0,0));
+                    LineDataSet dataSet = new LineDataSet(entryList, chart.getLineData().getDataSetCount()+"");
+                    dataSet.setAxisDependency(YAxis.AxisDependency.LEFT);
+                    // dataSet.setColor(...);
+                    chartDataSets.add(dataSet);
+                    chart.getLineData().addDataSet(dataSet);
+                    chart.notifyDataSetChanged();
+                }
+                StringBuilder out = new StringBuilder();
+                for(int i = 0; i < numSets; i++) {
+                    LineDataSet curData = chartDataSets.get(i);
+                    curData.addEntry(new Entry(graphNumPoints,values.get(i).floatValue()));
+                    if(curData.getEntryCount() > 30) { curData.removeFirst(); }
+                    curData.notifyDataSetChanged();
+                    out.append(doubleToStr(values.get(i)));
                     out.append(' ');
                 }
-                Log.i("DataPacket","Packet received: "+out.toString());
-                txtDataInfo.setText(out.toString());
+                String outString = out.toString();
+                Log.i("DataPacket","Packet received: "+outString);
+                txtDataInfo.setText(outString);
+                chart.invalidate();
                 graphNumPoints++;
             }
 
