@@ -6,6 +6,7 @@ import android.util.Log;
 import android.widget.TextView;
 
 import com.choosemuse.libmuse.ConnectionState;
+import com.choosemuse.libmuse.Eeg;
 import com.choosemuse.libmuse.Muse;
 import com.choosemuse.libmuse.MuseArtifactPacket;
 import com.choosemuse.libmuse.MuseConnectionListener;
@@ -49,7 +50,41 @@ public class RunnableStateMachine implements Runnable {
         this.chart = (LineChart) view.findViewById(R.id.chart);
         this.chartDataSets = new ArrayList<>();
         chart.setData(new LineData());
+
+        LinkedList<Entry> entryList = new LinkedList<>();
+        entryList.add(new Entry(0,0));
+        LineDataSet dataSet = new LineDataSet(entryList, Eeg.EEG1.name());
+        dataSet.setAxisDependency(YAxis.AxisDependency.LEFT);
+        chartDataSets.add(dataSet);
+        chart.getLineData().addDataSet(dataSet);
+
+        entryList = new LinkedList<>();
+        entryList.add(new Entry(0,0));
+        dataSet = new LineDataSet(entryList, Eeg.EEG2.name());
+        dataSet.setAxisDependency(YAxis.AxisDependency.LEFT);
+        chartDataSets.add(dataSet);
+        chart.getLineData().addDataSet(dataSet);
+
+        entryList = new LinkedList<>();
+        entryList.add(new Entry(0,0));
+        dataSet = new LineDataSet(entryList, Eeg.EEG3.name());
+        dataSet.setAxisDependency(YAxis.AxisDependency.LEFT);
+        chartDataSets.add(dataSet);
+        chart.getLineData().addDataSet(dataSet);
+
+        entryList = new LinkedList<>();
+        entryList.add(new Entry(0,0));
+        dataSet = new LineDataSet(entryList, Eeg.EEG4.name());
+        dataSet.setAxisDependency(YAxis.AxisDependency.LEFT);
+        chartDataSets.add(dataSet);
+        chart.getLineData().addDataSet(dataSet);
+
+        chart.notifyDataSetChanged();
+
+        chart.getAxisRight().setEnabled(false);
         chart.setAutoScaleMinMaxEnabled(true);
+        chart.getAxisLeft().setAxisMaximum(2000f);
+        chart.getAxisLeft().setAxisMinimum(-10f);
         timerHandler.postDelayed(this, HANDLER_DELAY);
     }
 
@@ -69,34 +104,45 @@ public class RunnableStateMachine implements Runnable {
         Log.i("Runnable","Found muse: "+curMuse.getName());
         txtConnectionInfo.setText("Muse: "+curMuse.getName());
         curMuse.registerDataListener(new MuseDataListener() {
-            private String doubleToStr(double value) {
-                final DecimalFormat formatter = new DecimalFormat("#.##");
-                return formatter.format(value);
-            }
+            private final DecimalFormat formatter = new DecimalFormat("#.##");
+            private final int MAXENTRIES = 50;
+
             @Override
             public void receiveMuseDataPacket(MuseDataPacket museDataPacket, Muse muse) {
-                ArrayList<Double> values = museDataPacket.values();
-                int numSets = values.size();
-                while(chart.getLineData().getDataSetCount() < numSets) {
-                    Log.i("ChartDataSet", "Adding data set to chart");
-                    LinkedList<Entry> entryList = new LinkedList<>();
-                    entryList.add(new Entry(0,0));
-                    LineDataSet dataSet = new LineDataSet(entryList, chart.getLineData().getDataSetCount()+"");
-                    dataSet.setAxisDependency(YAxis.AxisDependency.LEFT);
-                    // dataSet.setColor(...);
-                    chartDataSets.add(dataSet);
-                    chart.getLineData().addDataSet(dataSet);
-                    chart.notifyDataSetChanged();
-                }
                 StringBuilder out = new StringBuilder();
-                for(int i = 0; i < numSets; i++) {
-                    LineDataSet curData = chartDataSets.get(i);
-                    curData.addEntry(new Entry(graphNumPoints,values.get(i).floatValue()));
-                    if(curData.getEntryCount() > 30) { curData.removeFirst(); }
-                    curData.notifyDataSetChanged();
-                    out.append(doubleToStr(values.get(i)));
-                    out.append(' ');
-                }
+
+                Double value = museDataPacket.getEegChannelValue(Eeg.EEG1);
+                LineDataSet curData = chartDataSets.get(0);
+                curData.addEntry(new Entry(graphNumPoints,value.floatValue()));
+                if(curData.getEntryCount() > MAXENTRIES) { curData.removeFirst(); }
+                curData.notifyDataSetChanged();
+                out.append(formatter.format(value));
+                out.append(' ');
+
+                value = museDataPacket.getEegChannelValue(Eeg.EEG2);
+                curData = chartDataSets.get(1);
+                curData.addEntry(new Entry(graphNumPoints,value.floatValue()));
+                if(curData.getEntryCount() > MAXENTRIES) { curData.removeFirst(); }
+                curData.notifyDataSetChanged();
+                out.append(formatter.format(value));
+                out.append(' ');
+
+                value = museDataPacket.getEegChannelValue(Eeg.EEG3);
+                curData = chartDataSets.get(2);
+                curData.addEntry(new Entry(graphNumPoints,value.floatValue()));
+                if(curData.getEntryCount() > MAXENTRIES) { curData.removeFirst(); }
+                curData.notifyDataSetChanged();
+                out.append(formatter.format(value));
+                out.append(' ');
+
+                value = museDataPacket.getEegChannelValue(Eeg.EEG4);
+                curData = chartDataSets.get(3);
+                curData.addEntry(new Entry(graphNumPoints,value.floatValue()));
+                if(curData.getEntryCount() > MAXENTRIES) { curData.removeFirst(); }
+                curData.notifyDataSetChanged();
+                out.append(formatter.format(value));
+                out.append(' ');
+
                 String outString = out.toString();
                 Log.i("DataPacket","Packet received: "+outString);
                 txtDataInfo.setText(outString);
