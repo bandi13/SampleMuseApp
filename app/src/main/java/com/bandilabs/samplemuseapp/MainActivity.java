@@ -9,8 +9,16 @@ import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.view.View;
+import android.widget.Button;
 
 import com.choosemuse.libmuse.MuseManagerAndroid;
+
+import org.tensorflow.DataType;
+import org.tensorflow.Graph;
+import org.tensorflow.Output;
+import org.tensorflow.Session;
+import org.tensorflow.Tensor;
 
 import java.util.ArrayList;
 
@@ -57,6 +65,28 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        Button buttonname = (Button) findViewById(R.id.button) ;
+        buttonname.setOnClickListener(new View.OnClickListener() {
+           @Override
+           public void onClick(View view) {
+               Graph graph = new Graph();
+               Session session = new Session(graph);
+               // Construct a graph to add two float Tensors, using placeholders.
+               Output x = graph.opBuilder("Placeholder", "x").setAttr("dtype", DataType.FLOAT).build().output(0);
+               Output y = graph.opBuilder("Placeholder", "y").setAttr("dtype", DataType.FLOAT).build().output(0);
+               Output z = graph.opBuilder("Add", "z").addInput(x).addInput(y).build().output(0);
+               // Execute the graph multiple times, each time with a different value of x and y
+               float[] X = new float[]{1,2,3};
+               float[] Y = new float[]{4,5,6};
+               for (int i = 0; i < X.length; i++) {
+                   try (Tensor tx = Tensor.create(X[i]);
+                        Tensor ty = Tensor.create(Y[i]);
+                        Tensor tz = session.runner().feed("x", tx).feed("y", ty).fetch("z").run().get(0)) {
+                       System.out.println(X[i] + " + " + Y[i] + " = " + tz.floatValue());
+                   }
+               }
+           }
+        });
 
         String permissions[] = new String[]{Manifest.permission.ACCESS_COARSE_LOCATION,Manifest.permission.BLUETOOTH,Manifest.permission.BLUETOOTH_ADMIN};
         ArrayList<String> permissionsNeeded = new ArrayList<>();
