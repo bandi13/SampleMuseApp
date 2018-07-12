@@ -27,4 +27,39 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+
+
+        implementation (group: 'org.deeplearning4j', name: 'deeplearning4j-nn', version: '1.0.0-beta') {
+            exclude group: 'org.bytedeco.javacpp-presets', module: 'opencv-platform'
+            exclude group: 'org.bytedeco.javacpp-presets', module: 'leptonica-platform'
+            exclude group: 'org.bytedeco.javacpp-presets', module: 'hdf5-platform'
+        }
+        implementation group: 'org.nd4j', name: 'nd4j-native', version: '1.0.0-beta'
+        implementation group: 'org.nd4j', name: 'nd4j-native', version: '1.0.0-beta', classifier: "android-arm"
+        implementation group: 'org.nd4j', name: 'nd4j-native', version: '1.0.0-beta', classifier: "android-arm64"
+        implementation group: 'org.nd4j', name: 'nd4j-native', version: '1.0.0-beta', classifier: "android-x86"
+        implementation group: 'org.nd4j', name: 'nd4j-native', version: '1.0.0-beta', classifier: "android-x86_64"
+        implementation group: 'org.bytedeco.javacpp-presets', name: 'openblas', version: '0.2.20-1.4.1', classifier: "android-arm"
+        implementation group: 'org.bytedeco.javacpp-presets', name: 'openblas', version: '0.2.20-1.4.1', classifier: "android-arm64"
+        implementation group: 'org.bytedeco.javacpp-presets', name: 'openblas', version: '0.2.20-1.4.1', classifier: "android-x86"
+        implementation group: 'org.bytedeco.javacpp-presets', name: 'openblas', version: '0.2.20-1.4.1', classifier: "android-x86_64"
+        implementation group: 'org.bytedeco.javacpp-presets', name: 'opencv', version: '3.4.1-1.4.1', classifier: "android-arm"
+        implementation group: 'org.bytedeco.javacpp-presets', name: 'opencv', version: '3.4.1-1.4.1', classifier: "android-arm64"
+        implementation group: 'org.bytedeco.javacpp-presets', name: 'opencv', version: '3.4.1-1.4.1', classifier: "android-x86"
+        implementation group: 'org.bytedeco.javacpp-presets', name: 'opencv', version: '3.4.1-1.4.1', classifier: "android-x86_64"
+
+        implementation 'com.google.code.gson:gson:2.8.2'
+        annotationProcessor 'org.projectlombok:lombok:1.16.16'
+
+        implementation 'com.google.code.findbugs:annotations:3.0.1', {
+            exclude module: 'jsr305'
+            exclude module: 'jcip-annotations'
+        }
+
+        //This corrects for a junit version conflict.
+        configurations.all {
+            resolutionStrategy.force 'junit:junit:4.12'
+
+        }
+
 }

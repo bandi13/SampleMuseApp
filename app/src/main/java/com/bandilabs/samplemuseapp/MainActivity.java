@@ -12,6 +12,17 @@ import android.support.v7.app.AppCompatActivity;
 
 import com.choosemuse.libmuse.MuseManagerAndroid;
 
+import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
+import org.deeplearning4j.nn.conf.layers.DenseLayer;
+import org.deeplearning4j.nn.conf.layers.OutputLayer;
+import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
+import org.deeplearning4j.nn.weights.WeightInit;
+import org.nd4j.linalg.activations.Activation;
+import org.nd4j.linalg.api.ndarray.INDArray;
+import org.nd4j.linalg.dataset.DataSet;
+import org.nd4j.linalg.factory.Nd4j;
+import org.nd4j.linalg.lossfunctions.LossFunctions;
+
 import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
@@ -77,5 +88,26 @@ public class MainActivity extends AppCompatActivity {
             if(!bluetoothAdapter.isEnabled()) bluetoothAdapter.enable();
         }
         timerRunnable = new RunnableStateMachine(manager, this);
+
+
+                    //build the layers of the network
+            DenseLayer inputLayer = new DenseLayer.Builder()
+                    .nIn(4)
+                    .nOut(3)
+                    .name("Input")
+                    .build();
+
+            DenseLayer hiddenLayer = new DenseLayer.Builder()
+                    .nIn(3)
+                    .nOut(3)
+                    .name("Hidden")
+                    .build();
+
+            OutputLayer outputLayer = new OutputLayer.Builder(LossFunctions.LossFunction.NEGATIVELOGLIKELIHOOD)
+                    .nIn(3)
+                    .nOut(3)
+                    .name("Output")
+                    .activation(Activation.SOFTMAX)
+                    .build();
     }
 }
